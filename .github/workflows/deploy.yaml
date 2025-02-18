@@ -42,19 +42,22 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-    - name: Update kube config
-      run: aws eks update-kubeconfig --name us-unicorn-cluster --region us-east-1
-
-    - name: Deploy to EKS
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}        
-        IMAGE_TAG: ${{ steps.commit.outputs.short }}
-      run: |
-        sed -i "s|image:.*|image: $ECR_REGISTRY\/$ECR_REPOSITORY:$IMAGE_TAG|g" manifest/deployment.yaml && \
-        kubectl apply -f manifest/deployment.yaml
-  
     
+    - name: ssh to ec2
+      uses: appleboy/ssh-action@master
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr2.outputs.registry }}        
+        IMAGE_TAG: ${{ steps.commit.outputs.short }}
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        script: |
+          cd /home/ec2-user/repos/stress-api
+          aws eks update-kubeconfig --name us-unicorn-cluster --region us-east-1
+          sed -i "s|image:.*|image: $ECR_REGISTRY\/$ECR_REPOSITORY:$IMAGE_TAG|g" manifest/deployment.yaml && \
+          kubectl apply -f manifest/deployment.yaml
+
     - name: Configure AWS credentials2
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -74,13 +77,18 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-    - name: Update kube config2
-      run: aws eks update-kubeconfig --name ap-unicorn-cluster --region ap-northeast-2
-
-    - name: Deploy to EKS2
+    - name: ssh to ec2
+      uses: appleboy/ssh-action@master
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}        
+        ECR_REGISTRY: ${{ steps.login-ecr2.outputs.registry }}        
         IMAGE_TAG: ${{ steps.commit.outputs.short }}
-      run: |
-        sed -i "s|image:.*|image: $ECR_REGISTRY\/$ECR_REPOSITORY:$IMAGE_TAG|g" manifest/deployment-ap.yaml && \
-        kubectl apply -f manifest/deployment-ap.yaml
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        script: |
+          cd /home/ec2-user/repos/stress-api
+          aws eks update-kubeconfig --name ap-unicorn-cluster --region ap-northeast-2
+          sed -i "s|image:.*|image: $ECR_REGISTRY\/$ECR_REPOSITORY:$IMAGE_TAG|g" manifest/deployment-ap.yaml && \
+          kubectl apply -f manifest/deployment-ap.yaml
+        
