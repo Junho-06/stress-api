@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: dev
+  name: unicorn-ingress
+  annotations:
+    alb.ingress.kubernetes.io/load-balancer-name: unicorn-ingress
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /healthcheck
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:200148130345:certificate/20222cbf-7523-45d7-909f-171acc25b000
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /v1/location
+            pathType: Prefix
+            backend:
+              service:
+                name: location
+                port:
+                  number: 80
+          - path: /v1/status
+            pathType: Prefix
+            backend:
+              service:
+                name: status
+                port:
+                  number: 80
+          - path: /v1/stress
+            pathType: Prefix
+            backend:
+              service:
+                name: stress
+                port:
+                  number: 80
+          - path: /v1/unicorn
+            pathType: Prefix
+            backend:
+              service:
+                name: unicorn
+                port:
+                  number: 80
