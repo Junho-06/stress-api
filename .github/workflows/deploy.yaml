@@ -55,29 +55,29 @@ jobs:
         kubectl apply -f manifest/deployment.yaml
   
     
-    - name: Configure AWS credentials
+    - name: Configure AWS credentials2
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
 
-    - name: Login to Amazon ECR
-      id: login-ecr
+    - name: Login to Amazon ECR2
+      id: login-ecr2
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to Amazon ECR
+    - name: Build, tag, and push image to Amazon ECR2
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}        
+        ECR_REGISTRY: ${{ steps.login-ecr2.outputs.registry }}        
         IMAGE_TAG: ${{ steps.commit.outputs.short }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-    - name: Update kube config
+    - name: Update kube config2
       run: aws eks update-kubeconfig --name ap-unicorn-cluster --region ap-northeast-2
 
-    - name: Deploy to EKS
+    - name: Deploy to EKS2
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}        
         IMAGE_TAG: ${{ steps.commit.outputs.short }}
